@@ -6,20 +6,20 @@
 <meta name="theme-color" content="#0a2760">
 <title>Tennis queue</title>
 <style>
-  /* Tennis court theme: dark blue surround, light blue court, white lines */
-  :root { --deep:#0a2760; --court:#8cc8f4; --card:#0f3a82; --card2:#1a4f9e; --line:#ffffff; --ink:#ffffff; --mut:#bfe0fa; --warn:#ffb27a; --pageMut:#123a7a; }
+  /* Tennis court theme: deep blue surface, light blue text, crisp white court lines */
+  :root { --deep:#061a40; --court:#082653; --card:#0b326b; --card2:#124581; --line:#ffffff; --ink:#bfe6ff; --mut:#8cc8f4; --warn:#ffd08a; --pageMut:#9ed5ff; }
   * { box-sizing:border-box; }
   body { margin:0; padding:10px; background:var(--deep); color:var(--ink); font-family:"Segoe UI",Roboto,Arial,sans-serif; }
-  main { max-width:780px; margin:6px auto; background:var(--court); color:var(--deep); border:3px solid var(--line); border-radius:6px; padding:18px 16px 40px; }
+  main { max-width:780px; margin:6px auto; background:var(--court); color:var(--ink); border:3px solid var(--line); border-radius:4px; padding:18px 16px 40px; }
   .top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
-  h1 { font-size:24px; margin:0; display:flex; align-items:center; gap:10px; color:var(--deep); }
+  h1 { font-size:24px; margin:0; display:flex; align-items:center; gap:10px; color:var(--ink); }
   .logo { width:44px; height:27px; flex:none; }
-  h2 { font-size:15px; margin:0 0 10px; padding-bottom:5px; border-bottom:2px solid var(--line); text-transform:uppercase; letter-spacing:.05em; color:var(--deep); }
+  h2 { font-size:15px; margin:0 0 10px; padding-bottom:7px; border-bottom:2px solid var(--line); text-transform:uppercase; letter-spacing:.05em; color:var(--ink); }
   .sub { margin:2px 0 12px; color:var(--pageMut); font-size:14px; }
   section { margin-top:24px; }
   button { font:inherit; cursor:pointer; background:transparent; color:var(--ink); border:1.5px solid var(--line); border-radius:8px; padding:8px 12px; }
   button:disabled { opacity:.4; cursor:not-allowed; }
-  button.pri { background:var(--line); color:var(--deep); font-weight:600; }
+  button.pri { background:var(--line); color:var(--deep); font-weight:700; }
   button.sm { padding:4px 8px; font-size:13px; }
   button.ic, button.ib { display:inline-flex; align-items:center; justify-content:center; gap:6px; line-height:1; }
   button.ic { padding:6px 8px; }
@@ -27,7 +27,7 @@
   button.ar { border:0; background:none; color:var(--mut); padding:3px 5px; line-height:0; }
   button.ar:hover:not(:disabled) { color:var(--ink); }
   .seg button, form button, footer button { background:var(--deep); color:#fff; border:2px solid var(--line); }
-  form button.pri, footer button.pri, .seg button.on { background:#fff; color:var(--deep); border-color:var(--deep); }
+  form button.pri, footer button.pri, .seg button.on { background:#fff; color:var(--deep); border-color:#fff; }
   .seg { display:inline-flex; }
   .seg button { border-radius:0; }
   .seg button:first-child { border-radius:8px 0 0 8px; }
@@ -52,14 +52,16 @@
   .row.next { background:var(--card2); box-shadow:0 0 0 2px var(--court); }
   .row.guest { margin-left:22px; }
   .tag { font-size:11px; padding:2px 7px; border-radius:99px; border:1px solid var(--warn); color:var(--warn); }
-  .stat { font-size:12px; padding:3px 9px; border-radius:99px; border:2px solid var(--line); color:var(--deep); white-space:nowrap; }
+  .stat { font-size:12px; padding:3px 9px; border-radius:99px; border:2px solid var(--line); color:var(--ink); white-space:nowrap; }
   .stat.live { background:var(--deep); color:#fff; }
   form { display:flex; gap:8px; margin-bottom:10px; }
-  input, select { font:inherit; padding:9px 11px; border:2px solid var(--deep); border-radius:8px; background:#fff; color:var(--deep); }
+  input, select { font:inherit; padding:9px 11px; border:2px solid var(--line); border-radius:4px; background:#061a40; color:var(--ink); }
   input { flex:1; min-width:0; }
-  input::placeholder { color:#5a7fb8; }
-  .log li { font-size:15px; padding:7px 0; border-bottom:2px solid var(--line); color:var(--deep); }
+  input::placeholder { color:#8cc8f4; opacity:1; }
+  .log li { font-size:15px; padding:7px 0; border-bottom:2px solid var(--line); color:var(--ink); }
   footer { margin-top:28px; color:var(--pageMut); font-size:13px; }
+  input:focus, select:focus, button:focus-visible { outline:2px solid #8cc8f4; outline-offset:2px; }
+  .card, .row { border-radius:4px; }
   footer button { margin:8px 6px 0 0; }
   #toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:var(--deep); color:#fff; border:2px solid var(--line); padding:10px 16px; border-radius:10px; font-size:14px; display:none; max-width:90%; z-index:5; }
   #summary { display:none; }
@@ -121,7 +123,7 @@
 <script>
 // Paste your Firebase Realtime Database URL between the quotes to share the queue between phones.
 // Example: "https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app"
-const CFG = { databaseURL: "" };
+const CFG = { databaseURL: "https://blpc-tennis-default-rtdb.asia-southeast1.firebasedatabase.app" };
 // Court names (edit these) and the ball boys filled in at the start of every day.
 const COURTS = ["Court 1 (Hard)", "Court 2 (Shell)"];
 const DEFAULT_BALL_BOYS = ["Rex", "Tembo"];
