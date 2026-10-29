@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a2760">
+<title>Tennis queue</title>
+<style>
+  /* Tennis court theme: dark blue surround, light blue court, white lines */
+  :root { --deep:#0a2760; --court:#8cc8f4; --card:#0f3a82; --card2:#1a4f9e; --line:#ffffff; --ink:#ffffff; --mut:#bfe0fa; --warn:#ffb27a; --pageMut:#123a7a; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:10px; background:var(--deep); color:var(--ink); font-family:"Segoe UI",Roboto,Arial,sans-serif; }
+  main { max-width:780px; margin:6px auto; background:var(--court); color:var(--deep); border:3px solid var(--line); border-radius:6px; padding:18px 16px 40px; }
+  .top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  h1 { font-size:24px; margin:0; display:flex; align-items:center; gap:10px; color:var(--deep); }
+  .logo { width:44px; height:27px; flex:none; }
+  h2 { font-size:15px; margin:0 0 10px; padding-bottom:5px; border-bottom:2px solid var(--line); text-transform:uppercase; letter-spacing:.05em; color:var(--deep); }
+  .sub { margin:2px 0 12px; color:var(--pageMut); font-size:14px; }
+  section { margin-top:24px; }
+  button { font:inherit; cursor:pointer; background:transparent; color:var(--ink); border:1.5px solid var(--line); border-radius:8px; padding:8px 12px; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  button.pri { background:var(--line); color:var(--deep); font-weight:600; }
+  button.sm { padding:4px 8px; font-size:13px; }
+  button.ic, button.ib { display:inline-flex; align-items:center; justify-content:center; gap:6px; line-height:1; }
+  button.ic { padding:6px 8px; }
+  button.ic svg, button.ib svg, button.ar svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  button.ar { border:0; background:none; color:var(--mut); padding:3px 5px; line-height:0; }
+  button.ar:hover:not(:disabled) { color:var(--ink); }
+  .seg button, form button, footer button { background:var(--deep); color:#fff; border:2px solid var(--line); }
+  form button.pri, footer button.pri, .seg button.on { background:#fff; color:var(--deep); border-color:var(--deep); }
+  .seg { display:inline-flex; }
+  .seg button { border-radius:0; }
+  .seg button:first-child { border-radius:8px 0 0 8px; }
+  .seg button:last-child { border-radius:0 8px 8px 0; margin-left:-2px; }
+  .courts { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px; align-items:start; }
+  .card { background:var(--card); color:var(--ink); border:2px solid var(--line); border-radius:10px; padding:14px; }
+  .card h3 { margin:0 0 8px; font-size:18px; }
+  .card.off { opacity:.6; }
+  .lu { margin-top:10px; padding-top:8px; border-top:1px solid var(--line); }
+  .lh { display:flex; justify-content:space-between; align-items:center; }
+  .team { font-size:17px; line-height:1.55; margin:0 0 10px; }
+  .team .note { font-size:14px; }
+  .note { color:var(--pageMut); font-size:13px; }
+  .warn { color:#7a2e00; font-size:13px; margin:0 0 8px; }
+  .card .note, .row .note, .row .t, .lu .note { color:var(--mut); }
+  .card .warn { color:var(--warn); }
+  ol, ul.plain { list-style:none; margin:0; padding:0; }
+  .row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; background:var(--card); color:var(--ink); border:1.5px solid var(--line); border-radius:10px; padding:9px 12px; margin-bottom:6px; }
+  .row .nm { flex:1; min-width:120px; font-size:17px; }
+  .row .t { font-size:13px; }
+  .row .n { width:22px; color:var(--mut); }
+  .row.next { background:var(--card2); box-shadow:0 0 0 2px var(--court); }
+  .row.guest { margin-left:22px; }
+  .tag { font-size:11px; padding:2px 7px; border-radius:99px; border:1px solid var(--warn); color:var(--warn); }
+  .stat { font-size:12px; padding:3px 9px; border-radius:99px; border:2px solid var(--line); color:var(--deep); white-space:nowrap; }
+  .stat.live { background:var(--deep); color:#fff; }
+  form { display:flex; gap:8px; margin-bottom:10px; }
+  input, select { font:inherit; padding:9px 11px; border:2px solid var(--deep); border-radius:8px; background:#fff; color:var(--deep); }
+  input { flex:1; min-width:0; }
+  input::placeholder { color:#5a7fb8; }
+  .log li { font-size:15px; padding:7px 0; border-bottom:2px solid var(--line); color:var(--deep); }
+  footer { margin-top:28px; color:var(--pageMut); font-size:13px; }
+  footer button { margin:8px 6px 0 0; }
+  #toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:var(--deep); color:#fff; border:2px solid var(--line); padding:10px 16px; border-radius:10px; font-size:14px; display:none; max-width:90%; z-index:5; }
+  #summary { display:none; }
+  @media print {
+    body { background:#fff; color:#000; padding:0; }
+    main { background:none; border:0; padding:0; color:#000; }
+    main > *:not(#summary) { display:none !important; }
+    #summary { display:block; }
+    #summary h1 { font-size:22px; } #summary h2 { font-size:15px; margin:18px 0 6px; color:#000; border:0; }
+    #summary table { width:100%; border-collapse:collapse; }
+    #summary th, #summary td { border:1px solid #888; padding:4px 8px; text-align:left; font-size:12px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><h1><svg class="logo" viewBox="0 0 60 36" role="img" aria-label="Tennis court"><rect x="2" y="2" width="56" height="32" fill="#0f3a82" stroke="#fff" stroke-width="2.5"/><g stroke="#fff" stroke-width="1.6" fill="none"><path d="M2 8h56M2 28h56M16 8v20M44 8v20M16 18h28"/><path d="M30 2v32" stroke-width="2.6"/></g></svg>Tennis queue</h1><span class="stat" id="stat"></span></div>
+  <p class="sub" id="today"></p>
+  <p class="warn" id="mode"></p>
+  <div class="seg" role="group" aria-label="Courts in use">
+    <button data-a="courts" data-n="1">1 court</button>
+    <button data-a="courts" data-n="2">2 courts</button>
+  </div>
+
+  <section><h2>Courts (doubles)</h2><div class="courts" id="courts"></div></section>
+  <section>
+    <h2>Queue <span id="qn"></span></h2>
+    <p class="note">Tap Select on 4 players: the first two you tap are Team 1 and the next two are Team 2. Then tap Put selected here on a free court, or Add to line-up under a court. Players who are playing right now can be lined up too: tap their name on their court card.</p>
+    <p class="note" id="selbar"></p>
+    <ol id="queue"></ol>
+  </section>
+  <section>
+    <h2>Playing today <span id="cnt"></span></h2>
+    <form id="f">
+      <input id="n" placeholder="Player name (from 6 PM)" maxlength="30" autocomplete="off">
+      <select id="tag" aria-label="Status"><option value="in">Going</option><option value="maybe">Tentative</option></select>
+      <button class="pri">Add</button>
+    </form>
+    <ul class="plain" id="list"></ul>
+    <div id="outwrap"><h2 style="margin-top:16px">Cancelled</h2><ul class="plain" id="out"></ul></div>
+  </section>
+  <section>
+    <h2>Ball boys</h2>
+    <form id="bf"><input id="bn" placeholder="Add a ball boy" maxlength="30" autocomplete="off"><button class="pri">Add</button></form>
+    <ul class="plain" id="bblist"></ul>
+  </section>
+  <section><h2>Match log</h2><ul class="plain log" id="log"></ul></section>
+  <section><h2>Games played <span id="gtot"></span></h2><ul class="plain" id="tally"></ul></section>
+  <div id="summary"></div>
+  <footer>
+    <span id="foot"></span> Everything clears daily at 10:00 AM.
+    <div id="acts"></div>
+  </footer>
+</main>
+<div id="toast" role="status"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+// Paste your Firebase Realtime Database URL between the quotes to share the queue between phones.
+// Example: "https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app"
+const CFG = { databaseURL: "" };
+// Court names (edit these) and the ball boys filled in at the start of every day.
+const COURTS = ["Court 1 (Hard)", "Court 2 (Shell)"];
+const DEFAULT_BALL_BOYS = ["Rex", "Tembo"];
+
+const KEY = "tennisQueue.v3", RESET_HOUR = 10, MAX_GUESTS = 2, MAX_LINEUP = 3;
+const dayKey = () => { const x = new Date(Date.now() - RESET_HOUR * 3600000); return x.getFullYear() + "-" + (x.getMonth() + 1) + "-" + x.getDate(); };
+const fresh = () => ({
+  day: dayKey(), courtsOn: 2, players: [], c0: null, c1: null, l0: [], l1: [], log: [],
+  bb: DEFAULT_BALL_BOYS.map((n, i) => ({ id: i + 1, name: n })), bbInit: 1, seq: DEFAULT_BALL_BOYS.length + 1
+});
+const norm = c => {
+  const s = c || fresh();
+  s.players = s.players || []; s.log = s.log || []; s.bb = s.bb || [];
+  s.courtsOn = s.courtsOn || 2; s.seq = s.seq || 1; s.day = s.day || dayKey();
+  s.c0 = s.c0 || null; s.c1 = s.c1 || null; s.l0 = s.l0 || []; s.l1 = s.l1 || [];
+  if (!s.bbInit) { s.bbInit = 1; if (!s.bb.length) DEFAULT_BALL_BOYS.forEach(n => s.bb.push({ id: s.seq++, name: n })); }
+  return s;
+};
+const find = (s, id) => s.players.find(p => p.id === id);
+const dn = (s, p) => { const h = p.host && find(s, p.host); return h ? p.name + " c/o " + h.name : p.name; };
+const queueOf = s => s.players.filter(p => p.st === "queue").sort((a, b) => a.t - b.t);
+const guestCount = (s, p) => s.players.filter(x => x.host === p.id).length;
+const courtName = n => COURTS[n - 1] || "Court " + n;
+
+const four = (s, d, froms) => {
+  const ps = String(d.ids).split(",").map(x => find(s, +x));
+  if (ps.length !== 4 || ps.some(p => !p || p.nx || !froms.includes(p.st)) || new Set(ps.map(p => p.id)).size !== 4) return null;
+  return ps;
+};
+const startMatch = (s, i, ps) => {
+  ps.forEach(p => p.st = "court");
+  s.log.push({ court: i + 1, names: ps.map(p => dn(s, p)), start: Date.now(), bb: "" });
+  s["c" + i] = { ids: ps.map(p => p.id), log: s.log.length - 1, bb: 0 };
+};
+const releaseGroup = (s, i, k) => {
+  const L = s["l" + i], g = L[k]; if (!g) return;
+  g.ids.forEach(id => { const p = find(s, id); if (p) { p.nx = 0; if (p.st === "next") p.st = "queue"; } });
+  L.splice(k, 1);
+};
+// Starts the first lined-up group of a free court once all four players are free.
+const startReady = s => {
+  [0, 1].forEach(i => {
+    const L = s["l" + i];
+    if (!L.length || s["c" + i]) return;
+    if (i >= s.courtsOn) { while (L.length) releaseGroup(s, i, 0); return; }
+    const ps = L[0].ids.map(id => find(s, id));
+    if (ps.every(p => p && p.st === "next")) { L.shift(); ps.forEach(p => { p.nx = 0; }); startMatch(s, i, ps); }
+  });
+};
+
+// Every change goes through here. With Firebase it runs as a transaction so two people tapping at once cannot clash.
+const A = {
+  courts: (s, d) => { s.courtsOn = +d.n; },
+  add: (s, d) => {
+    if (s.players.some(p => !p.host && p.name.toLowerCase() === d.name.toLowerCase())) return;
+    s.players.push({ id: s.seq++, name: d.name, host: 0, st: "today", tag: d.tag === "maybe" ? "maybe" : "in", t: 0 });
+  },
+  in: (s, d) => { const p = find(s, +d.id); if (p && p.st === "today") { p.st = "queue"; p.tag = "in"; p.t = Date.now(); } },
+  leave: (s, d) => { const p = find(s, +d.id); if (p && p.st === "queue") p.st = "today"; },
+  tag: (s, d) => { const p = find(s, +d.id); if (p && p.st === "today") p.tag = p.tag === "maybe" ? "in" : "maybe"; },
+  cancel: (s, d) => {
+    const p = find(s, +d.id); if (!p || p.st !== "today") return;
+    p.st = "out";
+    s.players.forEach(g => { if (g.host === p.id && g.st === "today") g.st = "out"; });
+  },
+  readd: (s, d) => {
+    const p = find(s, +d.id); if (!p || p.st !== "out") return;
+    p.st = "today";
+    s.players.forEach(g => { if (g.host === p.id && g.st === "out") g.st = "today"; });
+  },
+  del: (s, d) => {
+    const id = +d.id, p = find(s, id);
+    if (!p || (p.st !== "today" && p.st !== "out")) return;
+    s.players = s.players.filter(x => !(x.id === id || (x.host === id && (x.st === "today" || x.st === "out"))));
+  },
+  guest: (s, d) => {
+    const h = find(s, +d.id); if (!h || h.host || h.st === "out") return;
+    const k = guestCount(s, h); if (k >= MAX_GUESTS) return;
+    s.players.push({ id: s.seq++, name: d.name || "Guest " + (k + 1), host: h.id, st: "today", tag: h.tag === "maybe" ? "maybe" : "in", t: 0 });
+  },
+  assign: (s, d) => {
+    const i = +d.i;
+    if (i >= s.courtsOn || s["c" + i]) return;
+    const ps = four(s, d, ["queue"]); if (!ps) return;
+    startMatch(s, i, ps);
+  },
+  queuenext: (s, d) => {
+    const i = +d.i, L = s["l" + i];
+    if (i >= s.courtsOn || L.length >= MAX_LINEUP) return;
+    const ps = four(s, d, ["queue", "court"]); if (!ps) return;
+    ps.forEach(p => { p.nx = i + 1; if (p.st === "queue") p.st = "next"; });
+    L.push({ ids: ps.map(p => p.id) });
+  },
+  teams: (s, d) => {
+    const o = d.w === "n" ? s["l" + d.i][+d.k] : s["c" + d.i]; if (!o) return;
+    o.ids = [o.ids[0], o.ids[2], o.ids[3], o.ids[1]];
+    if (d.w !== "n") s.log[o.log].names = o.ids.map(id => dn(s, find(s, id)));
+  },
+  cancelnext: (s, d) => { releaseGroup(s, +d.i, +d.k); },
+  lmove: (s, d) => {
+    const i = +d.i, j = 1 - i;
+    if (j >= s.courtsOn || s["l" + j].length >= MAX_LINEUP) return;
+    const g = s["l" + i].splice(+d.k, 1)[0]; if (!g) return;
+    s["l" + j].push(g);
+    g.ids.forEach(id => { const p = find(s, id); if (p) p.nx = j + 1; });
+  },
+  lshift: (s, d) => {
+    const L = s["l" + d.i], k = +d.k, j = k + (+d.dir);
+    if (!L[k] || !L[j]) return;
+    const t = L[k]; L[k] = L[j]; L[j] = t;
+  },
+  finish: (s, d) => {
+    const i = +d.i, c = s["c" + i];
+    if (!c || c.log !== +d.l) return;
+    const now = Date.now();
+    s.log[c.log].end = now;
+    c.ids.forEach((id, k) => { const p = find(s, id); if (p && p.st === "court") { if (p.nx) p.st = "next"; else { p.st = "queue"; p.t = now + k; } } });
+    s["c" + i] = null;
+  },
+  bbadd: (s, d) => {
+    if (s.bb.some(b => b.name.toLowerCase() === d.name.toLowerCase())) return;
+    s.bb.push({ id: s.seq++, name: d.name });
+  },
+  bbrename: (s, d) => {
+    const b = s.bb.find(x => x.id === +d.id); if (!b || !d.name) return;
+    if (s.bb.some(x => x.id !== b.id && x.name.toLowerCase() === d.name.toLowerCase())) return;
+    s.log.forEach(m => { if (m.bb === b.name) m.bb = d.name; });
+    b.name = d.name;
+  },
+  bbdel: (s, d) => {
+    const id = +d.id;
+    if ([0, 1].some(i => s["c" + i] && s["c" + i].bb === id)) return;
+    s.bb = s.bb.filter(b => b.id !== id);
+  },
+  bbset: (s, d) => {
+    const i = +d.i, id = +d.id, c = s["c" + i], b = s.bb.find(x => x.id === id);
+    if (!c || !b) return;
+    if (c.bb === id) { c.bb = 0; s.log[c.log].bb = ""; return; }
+    const o = s["c" + (1 - i)];
+    if (o && o.bb === id) return;
+    c.bb = id; s.log[c.log].bb = b.name;
+  },
+  clear: s => { Object.assign(s, fresh()); }
+};
+
+const sel = new Set();
+let S = fresh(), db = null, ref = null, online = false, loaded = false;
+if (CFG.databaseURL && typeof firebase !== "undefined") {
+  try { firebase.initializeApp({ databaseURL: CFG.databaseURL }); db = firebase.database(); ref = db.ref("tennisQueue"); } catch (e) { ref = null; }
+}
+if (!ref) { try { const r = localStorage.getItem(KEY); if (r) S = norm(JSON.parse(r)); } catch (e) {} loaded = true; }
+
+function mutate(fn) {
+  const run = cur => { let s = norm(cur); if (s.day !== dayKey()) s = fresh(); fn(s); startReady(s); return s; };
+  if (ref) ref.transaction(run, err => { if (err) alert("Could not save. Check your connection."); });
+  else { S = run(S); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} render(); }
+}
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const tm = t => new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+const $ = id => document.getElementById(id);
+const vs = ids => {
+  const n = ids.map(id => esc(find(S, id) ? dn(S, find(S, id)) : "?"));
+  return "<b>" + n[0] + " &amp; " + n[1] + '</b> <span class="note">vs</span> <b>' + n[2] + " &amp; " + n[3] + "</b>";
+};
+const ICONS = {
+  check: '<path d="M20 6 9 17l-5-5"/>', x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  up: '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>', down: '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+  pencil: '<path d="M21.2 6.8a1 1 0 0 0-4-4L3.8 16.2a2 2 0 0 0-.5.8L2 21.4a.5.5 0 0 0 .6.6l4.4-1.3a2 2 0 0 0 .8-.5z"/><path d="m15 5 4 4"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>',
+  userplus: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+  undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  shuffle: '<path d="M2 18h1.4c1.3 0 2.500-.6 3.300-1.700l6.100-8.600c.7-1.100 2-1.700 3.300-1.700H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.900c1.500 0 2.900.9 3.600 2.200"/><path d="M22 18h-5.900c-1.300 0-2.600-.7-3.300-1.800l-.5-.8"/><path d="m18 14 4 4-4 4"/>',
+  swap: '<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
+  flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>',
+  login: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  circle: '<circle cx="12" cy="12" r="9"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.100 0-2-.9-2-2V4c0-1.100.9-2 2-2h10c1.100 0 2 .9 2 2"/>',
+  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.600 13.500 6.800 4"/><path d="m15.400 6.500-6.800 4"/>',
+  printer: '<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/>'
+};
+const svg = n => '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[n] + "</svg>";
+// icon-only button (name shows as a tooltip and is read by screen readers)
+const ib = (n, label, attrs, cls) => '<button class="sm ic' + (cls ? " " + cls : "") + '" ' + attrs + ' title="' + esc(label) + '" aria-label="' + esc(label) + '">' + svg(n) + "</button>";
+// icon + short text button
+const ibt = (n, text, attrs, cls) => '<button class="sm ib' + (cls ? " " + cls : "") + '" ' + attrs + ">" + svg(n) + esc(text) + "</button>";
+let toastT;
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.style.display = "block"; clearTimeout(toastT); toastT = setTimeout(() => { t.style.display = "none"; }, 3500); }
+
+function summaryData() {
+  const g = Object.create(null), bg = Object.create(null);
+  S.players.forEach(p => { if (p.st !== "out") g[dn(S, p)] = 0; });
+  S.bb.forEach(b => { bg[b.name] = 0; });
+  let done = 0;
+  S.log.forEach(m => {
+    if (!m.end) return;
+    done++;
+    m.names.forEach(n => { g[n] = (g[n] || 0) + 1; });
+    if (m.bb) bg[m.bb] = (bg[m.bb] || 0) + 1;
+  });
+  const sorted = o => Object.keys(o).sort((a, b) => o[b] - o[a] || a.localeCompare(b)).map(n => [n, o[n]]);
+  return {
+    day: new Date().toLocaleDateString([], { weekday: "long", year: "numeric", month: "long", day: "numeric" }), done,
+    players: sorted(g), bbs: sorted(bg),
+    log: S.log.map(m => ({
+      court: courtName(m.court), time: tm(m.start) + (m.end ? " to " + tm(m.end) : " (playing)"),
+      teams: m.names.length === 4 ? m.names[0] + " & " + m.names[1] + " vs " + m.names[2] + " & " + m.names[3] : m.names.join(", "), bb: m.bb || ""
+    }))
+  };
+}
+
+function drawSummary(D) {
+  const W = 720, pad = 24, c = document.createElement("canvas"), x = c.getContext("2d"), ops = [];
+  let y = pad + 22;
+  const add = (t, font, color, xx, yy, align, maxw) => ops.push({ t, font, color, xx, yy, align, maxw });
+  const wrap = (txt, font, max) => {
+    x.font = font; const lines = []; let cur = "";
+    txt.split(" ").forEach(w => { const t = cur ? cur + " " + w : w; if (cur && x.measureText(t).width > max) { lines.push(cur); cur = w; } else cur = t; });
+    if (cur) lines.push(cur); return lines;
+  };
+  const head = h => { y += 10; add(h, "bold 15px Arial", "#0a2760", pad, y); y += 8; ops.push({ line: y }); y += 20; };
+  const colW = (W - 2 * pad) / 2;
+  const grid = (rows, empty) => {
+    if (!rows.length) { add(empty, "14px Arial", "#1d4a8a", pad, y); y += 20; return; }
+    const half = Math.ceil(rows.length / 2);
+    for (let r = 0; r < half; r++) {
+      [0, 1].forEach(col => {
+        const e = rows[r + col * half]; if (!e) return;
+        const x0 = pad + col * colW;
+        add(e[0], "14px Arial", "#0a2350", x0, y, "left", colW - 60);
+        add(String(e[1]), "bold 14px Arial", "#0a2350", x0 + colW - 20, y, "right");
+      });
+      y += 22;
+    }
+  };
+  add("Tennis summary", "bold 24px Arial", "#0a2350", pad, y); y += 24;
+  add(D.day + " · " + D.done + " games finished", "14px Arial", "#1d4a8a", pad, y); y += 14;
+  head("Games per player"); grid(D.players, "No players.");
+  head("Games per ball boy"); grid(D.bbs, "No ball boys.");
+  head("Match log");
+  if (!D.log.length) { add("No matches.", "14px Arial", "#1d4a8a", pad, y); y += 20; }
+  D.log.forEach(m => {
+    wrap(m.court + " · " + m.time + ": " + m.teams + (m.bb ? " · ball boy: " + m.bb : ""), "13px Arial", W - 2 * pad).forEach(l => { add(l, "13px Arial", "#0a2350", pad, y); y += 18; });
+    y += 6;
+  });
+  const H = y + pad;
+  c.width = W * 2; c.height = H * 2;
+  x.scale(2, 2); x.fillStyle = "#0a2760"; x.fillRect(0, 0, W, H); x.fillStyle = "#8cc8f4"; x.fillRect(10, 10, W - 20, H - 20);
+  x.strokeStyle = "#fff"; x.lineWidth = 3; x.strokeRect(10, 10, W - 20, H - 20); x.textBaseline = "alphabetic";
+  ops.forEach(o => {
+    if (o.line) { x.strokeStyle = "#fff"; x.lineWidth = 2; x.beginPath(); x.moveTo(pad, o.line); x.lineTo(W - pad, o.line); x.stroke(); return; }
+    x.font = o.font; x.fillStyle = o.color; x.textAlign = o.align || "left";
+    if (o.maxw) x.fillText(o.t, o.xx, o.yy, o.maxw); else x.fillText(o.t, o.xx, o.yy);
+  });
+  return c;
+}
+
+async function copyImage(shareOnly) {
+  let canvas;
+  try { canvas = drawSummary(summaryData()); } catch (e) { toast("Could not make the image."); return; }
+  const blobP = new Promise(res => canvas.toBlob(res, "image/png"));
+  if (!shareOnly) {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blobP })]);
+      toast("Image copied. Paste it into your group chat."); return;
+    } catch (e) {}
+  }
+  const blob = await blobP;
+  const file = new File([blob], "tennis-summary.png", { type: "image/png" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: "Tennis summary" }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "tennis-summary.png"; a.click();
+  toast("Copy is not supported here, so the image was saved. Attach it in your chat.");
+}
+
+function actions() {
+  $("acts").innerHTML = ibt("copy", "Copy image", 'data-a="img" title="Copy the summary as an image"', "pri") + " " + ibt("share", "Share", 'data-a="share" title="Share the summary image to WhatsApp, Messenger and more"') + " " +
+    ibt("printer", "Print", 'data-a="print" title="Print the summary"') + " " + ibt("trash", "Clear all", 'data-a="clear" title="Clear everything now"');
+}
+function render() {
+  $("today").textContent = new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+  const st = $("stat");
+  st.textContent = !ref ? "Single device" : !loaded ? "Connecting…" : online ? "● Live" : "Offline";
+  st.className = "stat" + (ref && online ? " live" : "");
+  $("mode").textContent = ref ? "" : "Not shared yet: other phones will not see this queue. Paste the Firebase URL into the file to share it.";
+  $("foot").textContent = ref ? "Shared live queue: anyone with this link can edit." : "Saved on this device only.";
+  document.querySelectorAll(".seg button").forEach(b => b.classList.toggle("on", +b.dataset.n === S.courtsOn));
+
+  for (const id of [...sel]) { const p = find(S, id); if (!p || p.nx || (p.st !== "queue" && p.st !== "court")) sel.delete(id); }
+  const sp = [...sel].map(id => esc(dn(S, find(S, id))));
+  $("selbar").innerHTML = sp.length ? "<b>Picked:</b> Team 1: " + (sp.slice(0, 2).join(" &amp; ") || "…") + " · Team 2: " + (sp.slice(2).join(" &amp; ") || "…") : "";
+  const q = queueOf(S);
+  const teamNo = id => Math.floor([...sel].indexOf(id) / 2) + 1;
+
+  const lineup = i => S["l" + i].map((g, k) => {
+    const wait = g.ids.map(id => find(S, id)).filter(p => p && p.st === "court").map(p => esc(dn(S, p)));
+    const o = 1 - i, canMove = o < S.courtsOn && S["l" + o].length < MAX_LINEUP;
+    const at = 'data-i="' + i + '" data-k="' + k + '"', last = k === S["l" + i].length - 1;
+    return '<div class="lu"><div class="lh"><b class="note">Line-up ' + (k + 1) + "</b><span>" +
+      '<button class="ar" data-a="lshift" ' + at + ' data-dir="-1" title="Move up" aria-label="Move up"' + (k === 0 ? " disabled" : "") + ">" + svg("up") + "</button>" +
+      '<button class="ar" data-a="lshift" ' + at + ' data-dir="1" title="Move down" aria-label="Move down"' + (last ? " disabled" : "") + ">" + svg("down") + "</button></span></div>" +
+      '<p class="team" style="margin:0 0 6px">' + vs(g.ids) + "</p>" + (wait.length ? '<p class="note" style="margin:0 0 6px">Waiting for ' + wait.join(", ") + " to finish</p>" : "") +
+      ib("shuffle", "Change teams", 'data-a="teams" data-w="n" ' + at) + " " +
+      (canMove ? ibt("swap", COURTS[o], 'data-a="lmove" ' + at) + " " : "") +
+      ib("x", "Cancel this line-up", 'data-a="cancelnext" ' + at) + "</div>";
+  }).join("");
+  const anyPlaying = [...sel].some(id => find(S, id).st === "court");
+
+  $("courts").innerHTML = [0, 1].map(i => {
+    const c = S["c" + i], L = S["l" + i], on = i < S.courtsOn, full = L.length >= MAX_LINEUP;
+    let body;
+    if (c) {
+      const ps = c.ids.map(id => find(S, id));
+      const lined = ps.filter(p => p && p.nx).map(p => esc(p.name) + " → " + esc(courtName(p.nx)));
+      const chips = ps.filter(p => p && !p.nx).map(p => '<button class="sm' + (sel.has(p.id) ? " pri" : "") + '" data-a="sel" data-id="' + p.id + '">' + (sel.has(p.id) ? "✓ Team " + teamNo(p.id) : esc(p.name)) + "</button>").join(" ");
+      const o = S["c" + (1 - i)];
+      const bbChips = S.bb.length ? S.bb.map(b => { const other = o && o.bb === b.id; return '<button class="sm' + (c.bb === b.id ? " pri" : "") + '" data-a="bbset" data-i="' + i + '" data-id="' + b.id + '"' + (other ? " disabled" : "") + ">" + esc(b.name) + (other ? " (" + esc(COURTS[1 - i]) + ")" : "") + "</button>"; }).join(" ") : '<span class="note">Add ball boy names below.</span>';
+      body = '<p class="team">' + vs(c.ids) + "</p>" +
+        (on ? "" : '<p class="warn">Court closed after this match</p>') +
+        ibt("flag", "Finish", 'data-a="finish" data-i="' + i + '" data-l="' + c.log + '"', "pri") + " " + ib("shuffle", "Change teams", 'data-a="teams" data-w="c" data-i="' + i + '"') +
+        '<p class="note" style="margin:10px 0 6px">Ball boy:</p>' + bbChips +
+        (lined.length ? '<p class="note" style="margin:10px 0 0">Lined up: ' + lined.join(", ") + "</p>" : "") +
+        lineup(i) +
+        (on && !full ? '<div class="lu"><p class="note" style="margin:0 0 6px">Line up a game below this court: pick from the queue, or tap a player here who is playing now.</p>' + chips +
+          '<p style="margin:8px 0 0">' + ibt("plus", "Add to line-up", 'data-a="queuenext" data-i="' + i + '"' + (sel.size === 4 ? "" : " disabled")) + "</p></div>" : "");
+    } else if (on) {
+      body = lineup(i) + (full ? "" : '<p class="note" style="margin:10px 0 6px">Open. Select 4 players (' + sel.size + "/4 selected).</p>" +
+        '<button class="pri sm" data-a="' + (anyPlaying ? "queuenext" : "assign") + '" data-i="' + i + '"' + (sel.size === 4 ? "" : " disabled") + ">" + (anyPlaying ? "Line up here (starts when they finish)" : "Put selected here") + "</button>");
+    } else body = '<p class="note">Not in use</p>';
+    return '<div class="card' + (on || c ? "" : " off") + '"><h3>' + esc(COURTS[i]) + "</h3>" + body + "</div>";
+  }).join("");
+
+  const gb = p => (!p.host && guestCount(S, p) < MAX_GUESTS) ? ib("userplus", "Add a guest", 'data-a="guest" data-id="' + p.id + '"') : "";
+  $("qn").textContent = q.length ? "(" + q.length + ")" : "";
+  $("queue").innerHTML = q.length ? q.map((p, k) =>
+    '<li class="row' + (sel.has(p.id) ? " next" : "") + '"><span class="n">' + (k + 1) + '</span><span class="nm">' + esc(dn(S, p)) +
+    '</span><span class="t">arrived ' + tm(p.t) + "</span>" + gb(p) + (sel.has(p.id) ? ibt("check", "Team " + teamNo(p.id), 'data-a="sel" data-id="' + p.id + '"', "pri") : ib("circle", "Select", 'data-a="sel" data-id="' + p.id + '"')) +
+    ib("logout", "Leave the queue", 'data-a="leave" data-id="' + p.id + '"') + "</li>"
+  ).join("") : '<li class="note">Nobody in the queue yet. Players tap Check in when they arrive.</li>';
+
+  const t = S.players.filter(p => p.st === "today"), ord = [];
+  t.filter(p => !p.host).forEach(h => { ord.push(h); t.filter(g => g.host === h.id).forEach(g => ord.push(g)); });
+  t.filter(g => !ord.includes(g)).forEach(g => ord.push(g));
+  const going = S.players.filter(p => (p.st !== "out" && p.st !== "today") || (p.st === "today" && p.tag !== "maybe")).length;
+  const maybe = t.filter(p => p.tag === "maybe").length;
+  $("cnt").textContent = (going + maybe) ? "(" + going + " going" + (maybe ? ", " + maybe + " tentative" : "") + ")" : "";
+  $("list").innerHTML = ord.length ? ord.map(p =>
+    '<li class="row' + (p.host ? " guest" : "") + '"><span class="nm">' + esc(dn(S, p)) + (p.tag === "maybe" ? ' <span class="tag">Tentative</span>' : "") + "</span>" +
+    ib("login", "Check in (arrived at the court)", 'data-a="in" data-id="' + p.id + '"', "pri") +
+    ib(p.tag === "maybe" ? "check" : "help", p.tag === "maybe" ? "Confirm: definitely coming" : "Mark as tentative", 'data-a="tag" data-id="' + p.id + '"') + gb(p) +
+    ib("x", "Cancel", 'data-a="cancel" data-id="' + p.id + '"') + "</li>"
+  ).join("") : '<li class="note">Add everyone playing today. They tap Check in once they arrive at the court.</li>';
+
+  const o = S.players.filter(p => p.st === "out");
+  $("outwrap").style.display = o.length ? "" : "none";
+  $("out").innerHTML = o.map(p => '<li class="row"><span class="nm">' + esc(dn(S, p)) + '</span>' + ib("undo", "Re-add", 'data-a="readd" data-id="' + p.id + '"') +
+    ib("trash", "Remove", 'data-a="del" data-id="' + p.id + '"') + "</li>").join("");
+
+  const D = summaryData(), bgm = Object.fromEntries(D.bbs), bnow = {};
+  [0, 1].forEach(i => { const c = S["c" + i]; if (c && c.bb) bnow[c.bb] = i + 1; });
+  $("bblist").innerHTML = S.bb.length ? S.bb.map(b => { const n = bgm[b.name] || 0;
+    return '<li class="row"><span class="nm">' + esc(b.name) + '</span><span class="t">' + (bnow[b.id] ? "on " + esc(courtName(bnow[b.id])) : "") + "</span><b>" + n + (n === 1 ? " game" : " games") + "</b>" +
+ib("pencil", "Edit name", 'data-a="bbrename" data-id="' + b.id + '" data-name="' + esc(b.name) + '"') +
+      (bnow[b.id] ? "" : ib("trash", "Remove", 'data-a="bbdel" data-id="' + b.id + '"')) + "</li>"; }).join("")
+    : '<li class="note">Add the ball boys working today.</li>';
+
+  $("log").innerHTML = D.log.length ? D.log.slice().reverse().map(m =>
+    "<li>" + esc(m.court) + " · " + esc(m.time) + ": " + esc(m.teams) + (m.bb ? " · ball boy: " + esc(m.bb) : "") + "</li>"
+  ).join("") : '<li class="note">No matches yet.</li>';
+
+  const now = new Set();
+  [S.c0, S.c1].forEach(c => c && c.ids.forEach(id => { const p = find(S, id); if (p) now.add(dn(S, p)); }));
+  $("gtot").textContent = D.done ? "(" + D.done + " finished)" : "";
+  $("tally").innerHTML = D.players.length ? D.players.map(([n, c]) => '<li class="row"><span class="nm">' + esc(n) + '</span><span class="t">' + (now.has(n) ? "playing now" : "") +
+    "</span><b>" + c + (c === 1 ? " game" : " games") + "</b></li>").join("") : '<li class="note">No players yet.</li>';
+
+  const tbl = (head, rows) => "<table><tr>" + head.map(h => "<th>" + h + "</th>").join("") + "</tr>" + rows.map(r => "<tr>" + r.map(c => "<td>" + esc(c) + "</td>").join("") + "</tr>").join("") + "</table>";
+  $("summary").innerHTML = "<h1>Tennis summary</h1><p>" + esc(D.day) + " · " + D.done + " games finished</p>" +
+    "<h2>Games per player</h2>" + (D.players.length ? tbl(["Player", "Games"], D.players) : "<p>No players.</p>") +
+    "<h2>Games per ball boy</h2>" + (D.bbs.length ? tbl(["Ball boy", "Games"], D.bbs) : "<p>No ball boys.</p>") +
+    "<h2>Match log</h2>" + (D.log.length ? tbl(["Court", "Time", "Teams", "Ball boy"], D.log.map(m => [m.court, m.time, m.teams, m.bb])) : "<p>No matches.</p>");
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-a]"); if (!b || b.disabled) return;
+  const d = Object.assign({}, b.dataset), a = d.a;
+  if (a === "sel") { const id = +d.id; if (sel.has(id)) sel.delete(id); else if (sel.size < 4) sel.add(id); render(); return; }
+  if (a === "print") { window.print(); return; }
+  if (a === "img") { copyImage(false); return; }
+  if (a === "share") { copyImage(true); return; }
+  if (a === "assign" || a === "queuenext") { if (sel.size !== 4) return; d.ids = [...sel].join(","); sel.clear(); }
+  if (a === "guest") { const n = prompt("Guest name (leave blank for Guest 1, Guest 2)"); if (n === null) return; d.name = n.trim().slice(0, 30); }
+  if (a === "bbrename") { const n = prompt("Ball boy name", d.name); if (n === null || !n.trim()) return; d.name = n.trim().slice(0, 30); }
+  if (!A[a]) return;
+  if (a === "clear" && !confirm("Clear all players, queue and matches for everyone? Ball boys go back to the starting names.")) return;
+  mutate(s => A[a](s, d));
+});
+$("f").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = $("n").value.trim(); if (!name) return;
+  if (S.players.some(p => !p.host && p.name.toLowerCase() === name.toLowerCase())) { alert(name + " is already on the list."); return; }
+  $("n").value = "";
+  mutate(s => A.add(s, { name: name, tag: $("tag").value }));
+});
+$("bf").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = $("bn").value.trim(); if (!name) return;
+  if (S.bb.some(b => b.name.toLowerCase() === name.toLowerCase())) { alert(name + " is already on the list."); return; }
+  $("bn").value = "";
+  mutate(s => A.bbadd(s, { name: name }));
+});
+
+if (ref) {
+  ref.on("value", snap => { S = norm(snap.val()); loaded = true; render(); });
+  db.ref(".info/connected").on("value", s => { online = !!s.val(); render(); });
+}
+setInterval(() => { if (S.day !== dayKey()) mutate(() => {}); else render(); }, 30000);
+actions();
+render();
+</script>
+</body>
+</html>
