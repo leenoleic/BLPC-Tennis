@@ -139,6 +139,20 @@
     button { padding:7px 8px; font-size:14px; }
   }
 
+
+  .quick-nav { position:sticky; top:0; z-index:4; display:flex; flex-wrap:wrap; gap:7px; padding:9px; margin:12px 0; background:#3c638e; border:2px solid #fff; }
+  .quick-nav a { display:inline-flex; align-items:center; justify-content:center; padding:8px 10px; border:2px solid #fff; color:#fff; text-decoration:none; font-weight:700; font-size:14px; background:#3c638e; }
+  .quick-nav a:active, .quick-nav a:focus { background:#fff; color:#3c638e; }
+  .workflow-hint { padding:11px 12px; margin:10px 0 14px; border:2px solid #fff; background:#3c638e; color:#fff; line-height:1.5; }
+  section[id] { scroll-margin-top:110px; border:2px solid #fff; padding:12px; margin-top:18px; }
+  .queue-row { align-items:center; }
+  .queue-name { flex:1 1 170px; min-width:0; text-align:left; border:0; background:transparent; color:#fff; font-size:20px; font-weight:750; padding:6px 2px; }
+  .queue-row.selected-player { background:#fff !important; color:#3c638e !important; }
+  .queue-row.selected-player .queue-name, .queue-row.selected-player .n, .queue-row.selected-player .t { color:#3c638e !important; }
+  .team-pick { display:inline-block; border:2px solid currentColor; padding:2px 6px; margin-left:7px; font-size:12px; white-space:nowrap; }
+  .quick-nav a { flex:1 1 auto; }
+  @media(max-width:560px) { .quick-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } .quick-nav a { min-height:42px; font-size:13px; } section[id] { padding:9px; scroll-margin-top:150px; } .queue-name { flex-basis:100%; } .queue-row .t { flex:1 1 100%; } }
+
 </style>
 </head>
 <body>
@@ -146,36 +160,44 @@
   <div class="top"><h1><svg class="logo" viewBox="0 0 60 36" role="img" aria-label="Tennis court"><rect x="2" y="2" width="56" height="32" fill="#8cccf4" stroke="#fff" stroke-width="2.5"/><g stroke="#fff" stroke-width="1.6" fill="none"><path d="M2 8h56M2 28h56M16 8v20M44 8v20M16 18h28"/><path d="M30 2v32" stroke-width="2.6"/></g></svg>BLPC Tennis - Queue</h1><span class="stat" id="stat"></span></div>
   <p class="sub" id="today"></p>
   <p class="warn" id="mode"></p>
+  <nav class="quick-nav" aria-label="Jump to section">
+    <a href="#players-area">1. Players Today</a>
+    <a href="#queue-area">2. Queue & Teams</a>
+    <a href="#courts-area">3. Courts</a>
+    <a href="#history-area">Match History</a>
+    <a href="#ballboys-area">Ball Boys</a>
+  </nav>
+  <div class="workflow-hint"><strong>How to use:</strong> Add everyone for today → when they arrive, tap their name in Players Today to check in → tap names in the Queue to select 4 players (first 2 = Team 1, next 2 = Team 2) → choose a court. After playing, tap Finish on the court card.</div>
   <div class="seg" role="group" aria-label="Courts in use">
     <button data-a="courts" data-n="1">1 court</button>
     <button data-a="courts" data-n="2">2 courts</button>
   </div>
   <button class="sm" style="margin-left:8px" data-a="swapcourt">Swap Hard/Shell assignments</button>
 
-  <section><h2>Courts (doubles)</h2><div class="courts" id="courts"></div></section>
-  <section>
-    <h2>Queue <span id="qn"></span></h2>
-    <p class="note">Tap Select on 4 players: the first two you tap are Team 1 and the next two are Team 2. Then tap Put selected here on a free court, or Add to line-up under a court. Players who are playing right now can be lined up too: tap their name on their court card.</p>
-    <p class="note" id="selbar"></p>
-    <ol id="queue"></ol>
-  </section>
-  <section>
-    <h2>Player board <span id="cnt"></span></h2>
+  <section id="players-area">
+    <h2>1. Players for Today <span id="cnt"></span></h2>
     <form id="f">
       <input id="n" placeholder="Add player name (from 6 PM)" maxlength="30" autocomplete="off">
       <select id="tag" aria-label="Status"><option value="in">Going</option><option value="maybe">Tentative</option></select>
       <button class="pri">Add player</button>
     </form>
     <div class="kanban">
-      <div class="kanban-col"><h3>Players Today <span id="todaycnt"></span></h3><p class="note">Tap a player's name to check them in. Tentative is a toggle.</p><ul class="plain" id="list"></ul></div>
-      <div class="kanban-col"><h3>Checked In <span id="checkcnt"></span></h3><p class="note">Tap a queued player's name to move them back to Players Today.</p><ul class="plain" id="checked"></ul></div>
+      <div class="kanban-col"><h3>Players Today — Not Arrived <span id="todaycnt"></span></h3><p class="note">Add the full list here first. When someone arrives at the court, tap their name to move them into the queue.</p><ul class="plain" id="list"></ul></div>
+      <div class="kanban-col"><h3>Checked In — Queue / Playing <span id="checkcnt"></span></h3><p class="note">Players appear here after check-in. Use the Queue section to choose teams; leave queue or finish playing from the relevant section.</p><ul class="plain" id="checked"></ul></div>
     </div>
     <div id="outwrap"><h2 style="margin-top:16px">Cancelled</h2><ul class="plain" id="out"></ul></div>
   </section>
-  <section><h2>Match log</h2><ul class="plain log" id="log"></ul></section>
+  <section id="queue-area">
+    <h2>2. Queue & Team Selection <span id="qn"></span></h2>
+    <p class="note">Tap a player name once to select them. The first 2 selected are Team 1; the next 2 are Team 2. Tap a selected name again to unselect. Once 4 are selected, choose an available court below.</p>
+    <p class="note" id="selbar"></p>
+    <ol id="queue"></ol>
+  </section>
+  <section id="courts-area"><h2>3. Courts (doubles)</h2><div class="courts" id="courts"></div></section>
+  <section id="history-area"><h2>Match History</h2><ul class="plain log" id="log"></ul></section>
   <section><h2>Games played <span id="gtot"></span></h2><ul class="plain" id="tally"></ul></section>
-  <section>
-    <h2>Ball boys</h2>
+  <section id="ballboys-area">
+    <h2>Ball Boys</h2>
     <form id="bf"><input id="bn" placeholder="Add a ball boy" maxlength="30" autocomplete="off"><button class="pri">Add</button></form>
     <ul class="plain" id="bblist"></ul>
   </section>
@@ -278,7 +300,7 @@ const A = {
     s.l0 = s.l0.filter(g => !g.ids.includes(id)); s.l1 = s.l1.filter(g => !g.ids.includes(id));
   },
   guest: (s, d) => {
-    const h = find(s, +d.id); if (!h || h.host || h.st === "out") return;
+    const h = find(s, +d.id); if (!h || h.host || h.st !== "today") return;
     const k = guestCount(s, h); if (k >= MAX_GUESTS) return;
     s.players.push({ id: s.seq++, name: d.name || "Guest " + (k + 1), host: h.id, st: "today", tag: h.tag === "maybe" ? "maybe" : "in", t: 0 });
   },
@@ -573,9 +595,8 @@ function render() {
   const gb = p => (p.st === "today" && !p.host && guestCount(S, p) < MAX_GUESTS) ? ib("userplus", "Add a guest", 'data-a="guest" data-id="' + p.id + '"') : "";
   $("qn").textContent = q.length ? "(" + q.length + ")" : "";
   $("queue").innerHTML = q.length ? q.map((p, k) =>
-    '<li class="row' + (sel.has(p.id) ? " next" : "") + '"><span class="n">' + (k + 1) + '</span><span class="nm">' + esc(dn(S, p)) +
-    '</span><span class="t">arrived ' + tm(p.t) + "</span>" + gb(p) + (sel.has(p.id) ? ibt("check", "Team " + teamNo(p.id), 'data-a="sel" data-id="' + p.id + '"', "pri") : ib("circle", "Select", 'data-a="sel" data-id="' + p.id + '"')) +
-    ib("logout", "Leave queue", 'data-a="leave" data-id="' + p.id + '"') + ib("check", "Done playing today", 'data-a="doneplay" data-id="' + p.id + '"') + "</li>"
+    '<li class="row queue-row' + (sel.has(p.id) ? " selected-player" : "") + '"><span class="n">' + (k + 1) + '</span><button class="queue-name" data-a="sel" data-id="' + p.id + '" aria-pressed="' + (sel.has(p.id) ? 'true' : 'false') + '">' + esc(dn(S, p)) + (sel.has(p.id) ? ' <span class="team-pick">TEAM ' + teamNo(p.id) + '</span>' : '') + '</button><span class="t">Checked in ' + tm(p.t) + "</span>" +
+    ibt("logout", "Leave queue", 'data-a="leave" data-id="' + p.id + '"') + ibt("check", "Done today", 'data-a="doneplay" data-id="' + p.id + '"') + "</li>"
   ).join("") : '<li class="note">Nobody in the queue yet. Players tap Check in when they arrive.</li>';
 
   const t = S.players.filter(p => p.st === "today"), ord = [];
@@ -593,7 +614,7 @@ function render() {
     ib("trash", "Delete player", 'data-a="del" data-id="' + p.id + '"') + "</li>"
   ).join("") : '<li class="note">No players added yet.</li>';
   $("checked").innerHTML = checked.length ? checked.map(p => {
-    const status = p.st === "court" ? "Playing" : p.st === "next" ? "Lined up" : "In queue";
+    const status = p.st === "court" ? "Playing now" : p.st === "next" ? "Lined up" : "Queued";
     const canReturn = p.st === "queue" && !p.nx;
     return '<li class="row"><button class="name-tap" data-a="' + (canReturn ? "leave" : "noop") + '" data-id="' + p.id + '"' + (canReturn ? "" : " disabled") + '>' + esc(dn(S,p)) + '</button><span class="stat">' + status + '</span>' +
       (canReturn ? ib("logout", "Leave queue / move back", 'data-a="leave" data-id="' + p.id + '"') + ib("check", "Done playing today", 'data-a="doneplay" data-id="' + p.id + '"') : "") +
