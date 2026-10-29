@@ -416,72 +416,105 @@ function summaryData() {
 }
 
 function drawSummary(D) {
-  const W = 720, pad = 24, c = document.createElement("canvas"), x = c.getContext("2d"), ops = [];
-  let y = pad + 22;
-  const add = (t, font, color, xx, yy, align, maxw) => ops.push({ t, font, color, xx, yy, align, maxw });
-  const wrap = (txt, font, max) => {
-    x.font = font; const lines = []; let cur = "";
-    txt.split(" ").forEach(w => { const t = cur ? cur + " " + w : w; if (cur && x.measureText(t).width > max) { lines.push(cur); cur = w; } else cur = t; });
-    if (cur) lines.push(cur); return lines;
-  };
-  const head = h => { y += 10; add(h, "bold 15px Arial", "#0a2760", pad, y); y += 8; ops.push({ line: y }); y += 20; };
-  const colW = (W - 2 * pad) / 2;
-  const grid = (rows, empty) => {
-    if (!rows.length) { add(empty, "14px Arial", "#1d4a8a", pad, y); y += 20; return; }
-    const half = Math.ceil(rows.length / 2);
-    for (let r = 0; r < half; r++) {
-      [0, 1].forEach(col => {
-        const e = rows[r + col * half]; if (!e) return;
-        const x0 = pad + col * colW;
-        add(e[0], "14px Arial", "#0a2350", x0, y, "left", colW - 60);
-        add(String(e[1]), "bold 14px Arial", "#0a2350", x0 + colW - 20, y, "right");
-      });
-      y += 22;
-    }
-  };
-  add("Tennis summary", "bold 24px Arial", "#0a2350", pad, y); y += 24;
-  add(D.day + " · " + D.done + " games finished", "14px Arial", "#1d4a8a", pad, y); y += 14;
-  head("Games per player"); grid(D.players, "No players.");
-  head("Games per ball boy"); grid(D.bbs, "No ball boys.");
-  head("Match log");
-  if (!D.log.length) { add("No matches.", "14px Arial", "#1d4a8a", pad, y); y += 20; }
-  D.log.forEach(m => {
-    wrap(m.court + " · " + m.time + ": " + m.teams + (m.bb ? " · ball boy: " + m.bb : ""), "13px Arial", W - 2 * pad).forEach(l => { add(l, "13px Arial", "#0a2350", pad, y); y += 18; });
-    y += 6;
+  // Plain report-style JPG: white background, black text, no decorative layout.
+  const W = 1200, pad = 56, lineH = 30, sectionH = 42;
+  const c = document.createElement("canvas"), x = c.getContext("2d");
+  const playing = [S.c0, S.c1].filter(Boolean);
+  const queued = queueOf(S);
+  const today = S.players.filter(p => p.st === "today");
+  const checked = S.players.filter(p => ["queue", "next", "court"].includes(p.st));
+  const active = S.players.filter(p => p.st !== "out");
+  const courtPlayers = state => state ? state.ids.map(id => { const p = find(S, id); return p ? dn(S, p) : "?"; }).join(" / ") : "";
+  const lines = [];
+  const add = (text = "", type = "normal") => lines.push({ text: String(text), type });
+  add("BLPC TENNIS", "title");
+  add("Queue & Match Management", "subtitle");
+  add(D.day + "  " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}));
+  add();
+  add("COURT STATUS", "section");
+  [0,1].forEach(i => {
+    const label = i === 0 ? "Hard Court" : "Shell Court";
+    const state = S["c" + i];
+    const lineup = S["l" + i] || [];
+    let status = state ? "Occupied" : (i < S.courtsOn ? "Available" : "Closed");
+    let names = state ? courtPlayers(state) : (lineup[0] ? lineup[0].ids.map(id => {const p=find(S,id);return p?dn(S,p):"?";}).join(" / ") : "");
+    add(label + ": " + status + (names ? " — " + names : ""));
   });
-  const H = y + pad;
-  c.width = W * 2; c.height = H * 2;
-  x.scale(2, 2); x.fillStyle = "#0a2760"; x.fillRect(0, 0, W, H); x.fillStyle = "#8cc8f4"; x.fillRect(10, 10, W - 20, H - 20);
-  x.strokeStyle = "#fff"; x.lineWidth = 3; x.strokeRect(10, 10, W - 20, H - 20); x.textBaseline = "alphabetic";
-  ops.forEach(o => {
-    if (o.line) { x.strokeStyle = "#fff"; x.lineWidth = 2; x.beginPath(); x.moveTo(pad, o.line); x.lineTo(W - pad, o.line); x.stroke(); return; }
-    x.font = o.font; x.fillStyle = o.color; x.textAlign = o.align || "left";
-    if (o.maxw) x.fillText(o.t, o.xx, o.yy, o.maxw); else x.fillText(o.t, o.xx, o.yy);
-  });
+  add();
+  add("PLAYERS TODAY (" + today.length + ")", "section");
+  if (!today.length) add("None");
+  today.forEach((p,i) => add((i+1)+". "+dn(S,p)+(p.tag === "maybe" ? " (Tentative)" : " (Confirmed)")));
+  add();
+  add("CHECKED IN (" + checked.length + ")", "section");
+  if (!checked.length) add("None");
+  checked.forEach((p,i) => add((i+1)+". "+dn(S,p)+" ("+(p.st === "court" ? "Playing" : p.st === "next" ? "Lined up" : "Queued")+")"));
+  const guests = S.players.filter(p => p.guest && p.st !== "out");
+  add();
+  add("GUEST PLAYERS (" + guests.length + ")", "section");
+  if (!guests.length) add("None");
+  guests.forEach((p,i) => add((i+1)+". "+dn(S,p)));
+  add();
+  add("MATCH QUEUE (" + queued.length + ")", "section");
+  if (!queued.length) add("None");
+  queued.forEach((p,i) => add((i+1)+". "+dn(S,p)));
+  add();
+  const bbCounts = Object.fromEntries(D.bbs);
+  add("BALL BOYS (" + S.bb.length + ")", "section");
+  if (!S.bb.length) add("None");
+  S.bb.forEach((b,i) => add((i+1)+". "+b.name+" — "+(bbCounts[b.name]||0)+" games"+(b.on ? " — "+b.on : "")));
+  add();
+  add("MATCH HISTORY (" + D.log.length + ")", "section");
+  if (!D.log.length) add("No matches recorded yet");
+  D.log.slice().reverse().forEach((m,i) => add((i+1)+". "+m.time+" | "+m.court+" | "+m.teams+(m.bb ? " | Ball boy: "+m.bb : "")));
+  add();
+  add("SUMMARY", "section");
+  add("Total players today: " + active.length);
+  add("Checked in: " + checked.length);
+  add("Matches played: " + D.done);
+  add("Players queued: " + queued.length);
+  add("Courts occupied: " + playing.length + " / " + S.courtsOn);
+  add("Ball boys: " + S.bb.length);
+
+  const totalH = pad * 2 + lines.reduce((sum, row) => sum + (row.type === "title" ? 46 : row.type === "subtitle" ? 34 : row.type === "section" ? sectionH : lineH), 0);
+  c.width = W * 2; c.height = totalH * 2; x.scale(2,2);
+  x.fillStyle = "#ffffff"; x.fillRect(0,0,W,totalH);
+  x.fillStyle = "#000000"; x.textAlign = "left"; x.textBaseline = "alphabetic";
+  let y = pad;
+  for (const row of lines) {
+    if (row.type === "title") { x.font = "700 30px Arial"; y += 32; }
+    else if (row.type === "subtitle") { x.font = "700 20px Arial"; y += 27; }
+    else if (row.type === "section") { x.font = "700 19px Arial"; y += 29; }
+    else { x.font = "400 17px Arial"; y += 23; }
+    if (row.text) x.fillText(row.text, pad, y, W - pad * 2);
+    if (row.type === "title") y += 10;
+    else if (row.type === "subtitle") y += 7;
+    else if (row.type === "section") y += 13;
+    else y += 7;
+  }
   return c;
 }
 
 async function copyImage(shareOnly) {
   let canvas;
   try { canvas = drawSummary(summaryData()); } catch (e) { toast("Could not make the image."); return; }
-  const blobP = new Promise(res => canvas.toBlob(res, "image/png"));
+  const blobP = new Promise(res => canvas.toBlob(res, "image/jpeg", 0.94));
   if (!shareOnly) {
     try {
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": blobP })]);
+      await navigator.clipboard.write([new ClipboardItem({ "image/jpeg": blobP })]);
       toast("Image copied. Paste it into your group chat."); return;
     } catch (e) {}
   }
   const blob = await blobP;
-  const file = new File([blob], "tennis-summary.png", { type: "image/png" });
+  const file = new File([blob], "tennis-summary.jpg", { type: "image/jpeg" });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try { await navigator.share({ files: [file], title: "Tennis summary" }); return; } catch (e) { if (e && e.name === "AbortError") return; }
   }
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "tennis-summary.png"; a.click();
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "tennis-summary.jpg"; a.click();
   toast("Copy is not supported here, so the image was saved. Attach it in your chat.");
 }
 
 function actions() {
-  $("acts").innerHTML = ibt("copy", "Copy image", 'data-a="img" title="Copy the summary as an image"', "pri") + " " + ibt("share", "Share", 'data-a="share" title="Share the summary image to WhatsApp, Messenger and more"') + " " +
+  $("acts").innerHTML = ibt("copy", "Export JPG", 'data-a="img" title="Export the summary as JPG"', "pri") + " " + ibt("share", "Share", 'data-a="share" title="Share the summary image to WhatsApp, Messenger and more"') + " " +
     ibt("printer", "Print", 'data-a="print" title="Print the summary"') + " " + ibt("trash", "Clear all", 'data-a="clear" title="Clear everything now"');
 }
 function render() {
