@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0a2760">
+<meta name="theme-color" content="#6c935c">
 <title>BLPC Tennis - Queue</title>
 <style>
-  /* Tennis court theme: deep blue surface, light blue text, crisp white court lines */
-  :root { --deep:#061a40; --court:#082653; --card:#0b326b; --card2:#124581; --line:#ffffff; --ink:#bfe6ff; --mut:#8cc8f4; --warn:#ffd08a; --pageMut:#9ed5ff; }
+  /* White page, light-blue UI, dark-blue text, solid white tennis-court outlines */
+  :root { --deep:#082653; --court:#eaf6ff; --card:#bfe5ff; --card2:#d8efff; --line:#ffffff; --ink:#082653; --mut:#285d8c; --warn:#8a4b00; --pageMut:#285d8c; }
   * { box-sizing:border-box; }
-  body { margin:0; padding:10px; background:var(--deep); color:var(--ink); font-family:"Segoe UI",Roboto,Arial,sans-serif; }
-  main { max-width:780px; margin:6px auto; background:var(--court); color:var(--ink); border:3px solid var(--line); border-radius:4px; padding:18px 16px 40px; }
+  body { margin:0; padding:10px; background:#ffffff; color:var(--ink); font-family:"Segoe UI",Roboto,Arial,sans-serif; }
+  main { max-width:1000px; margin:6px auto; background:var(--court); color:var(--ink); border:3px solid var(--line); border-radius:4px; padding:18px 16px 40px; }
   .top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
   h1 { font-size:24px; margin:0; display:flex; align-items:center; gap:10px; color:var(--ink); }
   .logo { width:44px; height:27px; flex:none; }
@@ -33,6 +33,16 @@
   .seg button:first-child { border-radius:8px 0 0 8px; }
   .seg button:last-child { border-radius:0 8px 8px 0; margin-left:-2px; }
   .courts { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px; align-items:start; }
+  .kanban { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; align-items:start; }
+  .kanban-col { background:#d8efff; border:3px solid #fff; padding:12px; min-width:0; }
+  .kanban-col h3 { margin:0 0 10px; font-size:17px; color:#082653; }
+  .name-tap { flex:1; min-width:100px; text-align:left; white-space:normal; overflow-wrap:anywhere; }
+  .court-state { display:inline-block; border:2px solid #fff; padding:3px 8px; font-size:12px; font-weight:700; margin-bottom:8px; }
+  .name-tap { border:0; background:transparent; color:#082653; padding:2px 0; font-weight:650; }
+  .name-tap:hover { text-decoration:underline; }
+  .kanban-col .row { background:#bfe5ff; }
+  .stat.live { background:#bfe5ff; color:#082653; }
+  @media (max-width:560px) { .kanban { grid-template-columns:1fr; } main { padding:14px 10px 28px; } .top { align-items:flex-start; flex-wrap:wrap; } }
   .card { background:var(--card); color:var(--ink); border:2px solid var(--line); border-radius:10px; padding:14px; }
   .card h3 { margin:0 0 8px; font-size:18px; }
   .card.off { opacity:.6; }
@@ -41,7 +51,7 @@
   .team { font-size:17px; line-height:1.55; margin:0 0 10px; }
   .team .note { font-size:14px; }
   .note { color:var(--pageMut); font-size:13px; }
-  .warn { color:#7a2e00; font-size:13px; margin:0 0 8px; }
+  .warn { color:#8a4b00; font-size:13px; margin:0 0 8px; }
   .card .note, .row .note, .row .t, .lu .note { color:var(--mut); }
   .card .warn { color:var(--warn); }
   ol, ul.plain { list-style:none; margin:0; padding:0; }
@@ -55,9 +65,9 @@
   .stat { font-size:12px; padding:3px 9px; border-radius:99px; border:2px solid var(--line); color:var(--ink); white-space:nowrap; }
   .stat.live { background:var(--deep); color:#fff; }
   form { display:flex; gap:8px; margin-bottom:10px; }
-  input, select { font:inherit; padding:9px 11px; border:2px solid var(--line); border-radius:4px; background:#061a40; color:var(--ink); }
+  input, select { font:inherit; padding:9px 11px; border:2px solid var(--line); border-radius:4px; background:#dff2ff; color:var(--ink); }
   input { flex:1; min-width:0; }
-  input::placeholder { color:#8cc8f4; opacity:1; }
+  input::placeholder { color:#285d8c; opacity:1; }
   .log li { font-size:15px; padding:7px 0; border-bottom:2px solid var(--line); color:var(--ink); }
   footer { margin-top:28px; color:var(--pageMut); font-size:13px; }
   input:focus, select:focus, button:focus-visible { outline:2px solid #8cc8f4; outline-offset:2px; }
@@ -74,17 +84,73 @@
     #summary table { width:100%; border-collapse:collapse; }
     #summary th, #summary td { border:1px solid #888; padding:4px 8px; text-align:left; font-size:12px; }
   }
+
+  /* Tennis court theme: green outer court, blue interior, white lines and typography */
+  :root { --deep:#3c638e; --court:#3c638e; --card:#3c638e; --card2:#3c638e; --line:#ffffff; --ink:#ffffff; --mut:#ffffff; --warn:#ffffff; --pageMut:#ffffff; }
+  html, body { width:100%; min-height:100%; overflow-x:hidden; }
+  body { background:#6c935c; color:#fff; padding:clamp(8px,2.5vw,18px); }
+  main { width:100%; max-width:1000px; background:#3c638e; color:#fff; border:3px solid #fff; border-radius:0; padding:clamp(12px,3vw,22px); }
+  h1, h2, h3, p, label, span, li, small, strong, .sub, .note, .warn, .row, .row .nm, .row .t, .row .n, .team, .log li, footer, #foot { color:#fff !important; }
+  h2, .lu, .log li, .kanban-col h3 { border-color:#fff !important; }
+  .card, .row, .kanban-col, .kanban-col .row, .row.next, .stat, .stat.live, .court-state, input, select, textarea { background:#3c638e !important; color:#fff !important; border:2px solid #fff !important; }
+  .kanban-col { border-radius:0; }
+  .text-action { min-height:40px; padding:8px 10px; font-size:14px; line-height:1.2; white-space:normal; }
+  .name-tap, .row .nm, .team { font-size:20px !important; line-height:1.4; }
+  .row { gap:10px; padding:11px 12px; }
+  .stat, .court-state { font-size:14px; }
+  @media (max-width:560px) { .text-action { flex:1 1 auto; } .name-tap { min-width:100%; font-size:21px !important; } .row .nm { font-size:20px !important; } }
+  button { background:#3c638e; color:#fff; border:2px solid #fff; border-radius:4px; min-height:38px; }
+  button.pri, form button.pri, footer button.pri, .seg button.on { background:#fff !important; color:#3c638e !important; border-color:#fff !important; }
+  .seg button, form button, footer button { background:#3c638e; color:#fff; border:2px solid #fff; }
+  button.ar { color:#fff; }
+  .tag { color:#fff; border-color:#fff; }
+  input::placeholder { color:#e7eef5; opacity:1; }
+  input:focus, select:focus, button:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+  .name-tap { color:#fff !important; }
+  .court-state { display:inline-block; }
+  #toast { background:#3c638e; color:#fff; border:2px solid #fff; border-radius:4px; }
+  footer { color:#fff; }
+  @media (max-width:700px) {
+    body { padding:6px; }
+    main { margin:0 auto; padding:12px 10px 18px; width:100%; }
+    .top { display:flex; align-items:flex-start; flex-wrap:wrap; gap:8px; }
+    h1 { font-size:clamp(19px,5vw,24px); overflow-wrap:anywhere; }
+    .logo { width:38px; }
+    .courts, .kanban { grid-template-columns:minmax(0,1fr) !important; }
+    section { margin-top:18px; }
+    form { display:flex; flex-wrap:wrap; width:100%; }
+    form input, form select { flex:1 1 100%; width:100%; min-width:0; }
+    form button { flex:1 1 auto; }
+    .row { min-width:0; width:100%; gap:6px; padding:9px 8px; }
+    .row .nm, .name-tap { min-width:0; overflow-wrap:anywhere; }
+    .card { min-width:0; padding:11px; }
+    .seg { max-width:100%; }
+    .seg button { flex:1; padding:8px; }
+    button { max-width:100%; overflow-wrap:anywhere; }
+    #acts { display:flex; flex-direction:column; align-items:stretch; gap:8px; }
+    #acts button, footer button { width:100%; margin:4px 0 0; }
+    footer { overflow-wrap:anywhere; }
+  }
+  @media (max-width:380px) {
+    body { padding:4px; }
+    main { padding:10px 7px 16px; }
+    h2 { font-size:14px; }
+    .row .nm { font-size:15px; }
+    button { padding:7px 8px; font-size:14px; }
+  }
+
 </style>
 </head>
 <body>
 <main>
-  <div class="top"><h1><svg class="logo" viewBox="0 0 60 36" role="img" aria-label="Tennis court"><rect x="2" y="2" width="56" height="32" fill="#0f3a82" stroke="#fff" stroke-width="2.5"/><g stroke="#fff" stroke-width="1.6" fill="none"><path d="M2 8h56M2 28h56M16 8v20M44 8v20M16 18h28"/><path d="M30 2v32" stroke-width="2.6"/></g></svg>BLPC Tennis - Queue</h1><span class="stat" id="stat"></span></div>
+  <div class="top"><h1><svg class="logo" viewBox="0 0 60 36" role="img" aria-label="Tennis court"><rect x="2" y="2" width="56" height="32" fill="#8cccf4" stroke="#fff" stroke-width="2.5"/><g stroke="#fff" stroke-width="1.6" fill="none"><path d="M2 8h56M2 28h56M16 8v20M44 8v20M16 18h28"/><path d="M30 2v32" stroke-width="2.6"/></g></svg>BLPC Tennis - Queue</h1><span class="stat" id="stat"></span></div>
   <p class="sub" id="today"></p>
   <p class="warn" id="mode"></p>
   <div class="seg" role="group" aria-label="Courts in use">
     <button data-a="courts" data-n="1">1 court</button>
     <button data-a="courts" data-n="2">2 courts</button>
   </div>
+  <button class="sm" style="margin-left:8px" data-a="swapcourt">Swap Hard/Shell assignments</button>
 
   <section><h2>Courts (doubles)</h2><div class="courts" id="courts"></div></section>
   <section>
@@ -94,22 +160,25 @@
     <ol id="queue"></ol>
   </section>
   <section>
-    <h2>Playing today <span id="cnt"></span></h2>
+    <h2>Player board <span id="cnt"></span></h2>
     <form id="f">
-      <input id="n" placeholder="Player name (from 6 PM)" maxlength="30" autocomplete="off">
+      <input id="n" placeholder="Add player name (from 6 PM)" maxlength="30" autocomplete="off">
       <select id="tag" aria-label="Status"><option value="in">Going</option><option value="maybe">Tentative</option></select>
-      <button class="pri">Add</button>
+      <button class="pri">Add player</button>
     </form>
-    <ul class="plain" id="list"></ul>
+    <div class="kanban">
+      <div class="kanban-col"><h3>Players Today <span id="todaycnt"></span></h3><p class="note">Tap a player's name to check them in. Tentative is a toggle.</p><ul class="plain" id="list"></ul></div>
+      <div class="kanban-col"><h3>Checked In <span id="checkcnt"></span></h3><p class="note">Tap a queued player's name to move them back to Players Today.</p><ul class="plain" id="checked"></ul></div>
+    </div>
     <div id="outwrap"><h2 style="margin-top:16px">Cancelled</h2><ul class="plain" id="out"></ul></div>
   </section>
+  <section><h2>Match log</h2><ul class="plain log" id="log"></ul></section>
+  <section><h2>Games played <span id="gtot"></span></h2><ul class="plain" id="tally"></ul></section>
   <section>
     <h2>Ball boys</h2>
     <form id="bf"><input id="bn" placeholder="Add a ball boy" maxlength="30" autocomplete="off"><button class="pri">Add</button></form>
     <ul class="plain" id="bblist"></ul>
   </section>
-  <section><h2>Match log</h2><ul class="plain log" id="log"></ul></section>
-  <section><h2>Games played <span id="gtot"></span></h2><ul class="plain" id="tally"></ul></section>
   <div id="summary"></div>
   <footer>
     <span id="foot"></span> Everything clears daily at 10:00 AM.
@@ -177,12 +246,20 @@ const startReady = s => {
 // Every change goes through here. With Firebase it runs as a transaction so two people tapping at once cannot clash.
 const A = {
   courts: (s, d) => { s.courtsOn = +d.n; },
+  swapcourt: s => {
+    const c = s.c0; s.c0 = s.c1; s.c1 = c;
+    const l = s.l0; s.l0 = s.l1; s.l1 = l;
+    s.log.forEach(m => { if (!m.end && (m.court === 1 || m.court === 2)) m.court = m.court === 1 ? 2 : 1; });
+    s.l0.forEach(g => g.ids.forEach(id => { const p = find(s,id); if (p) p.nx = 1; }));
+    s.l1.forEach(g => g.ids.forEach(id => { const p = find(s,id); if (p) p.nx = 2; }));
+  },
   add: (s, d) => {
     if (s.players.some(p => !p.host && p.name.toLowerCase() === d.name.toLowerCase())) return;
     s.players.push({ id: s.seq++, name: d.name, host: 0, st: "today", tag: d.tag === "maybe" ? "maybe" : "in", t: 0 });
   },
   in: (s, d) => { const p = find(s, +d.id); if (p && p.st === "today") { p.st = "queue"; p.tag = "in"; p.t = Date.now(); } },
-  leave: (s, d) => { const p = find(s, +d.id); if (p && p.st === "queue") p.st = "today"; },
+  leave: (s, d) => { const p = find(s, +d.id); if (p && p.st === "queue" && !p.nx) { p.st = "today"; p.tag = "in"; p.t = 0; } },
+  doneplay: (s, d) => { const p = find(s, +d.id); if (!p || p.st !== "queue" || p.nx) return; p.st = "out"; p.t = 0; s.players.forEach(g => { if (g.host === p.id && (g.st === "today" || g.st === "queue") && !g.nx) { g.st = "out"; g.t = 0; } }); },
   tag: (s, d) => { const p = find(s, +d.id); if (p && p.st === "today") p.tag = p.tag === "maybe" ? "in" : "maybe"; },
   cancel: (s, d) => {
     const p = find(s, +d.id); if (!p || p.st !== "today") return;
@@ -196,8 +273,9 @@ const A = {
   },
   del: (s, d) => {
     const id = +d.id, p = find(s, id);
-    if (!p || (p.st !== "today" && p.st !== "out")) return;
-    s.players = s.players.filter(x => !(x.id === id || (x.host === id && (x.st === "today" || x.st === "out"))));
+    if (!p || p.st === "court" || p.st === "next" || p.nx) return;
+    s.players = s.players.filter(x => !(x.id === id || x.host === id));
+    s.l0 = s.l0.filter(g => !g.ids.includes(id)); s.l1 = s.l1.filter(g => !g.ids.includes(id));
   },
   guest: (s, d) => {
     const h = find(s, +d.id); if (!h || h.host || h.st === "out") return;
@@ -277,7 +355,7 @@ if (CFG.databaseURL && typeof firebase !== "undefined") {
 if (!ref) { try { const r = localStorage.getItem(KEY); if (r) S = norm(JSON.parse(r)); } catch (e) {} loaded = true; }
 
 function mutate(fn) {
-  const run = cur => { let s = norm(cur); if (s.day !== dayKey()) s = fresh(); fn(s); startReady(s); return s; };
+  const run = cur => { let s = norm(cur); fn(s); startReady(s); return s; };
   if (ref) ref.transaction(run, err => { if (err) alert("Could not save. Check your connection."); });
   else { S = run(S); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} render(); }
 }
@@ -426,8 +504,8 @@ function render() {
     const o = 1 - i, canMove = o < S.courtsOn && S["l" + o].length < MAX_LINEUP;
     const at = 'data-i="' + i + '" data-k="' + k + '"', last = k === S["l" + i].length - 1;
     return '<div class="lu"><div class="lh"><b class="note">Line-up ' + (k + 1) + "</b><span>" +
-      '<button class="ar" data-a="lshift" ' + at + ' data-dir="-1" title="Move up" aria-label="Move up"' + (k === 0 ? " disabled" : "") + ">" + svg("up") + "</button>" +
-      '<button class="ar" data-a="lshift" ' + at + ' data-dir="1" title="Move down" aria-label="Move down"' + (last ? " disabled" : "") + ">" + svg("down") + "</button></span></div>" +
+      '<button class="ar text-action" data-a="lshift" ' + at + ' data-dir="-1" title="Move up"' + (k === 0 ? " disabled" : "") + ">Move up</button>" +
+      '<button class="ar text-action" data-a="lshift" ' + at + ' data-dir="1" title="Move down"' + (last ? " disabled" : "") + ">Move down</button></span></div>" +
       '<p class="team" style="margin:0 0 6px">' + vs(g.ids) + "</p>" + (wait.length ? '<p class="note" style="margin:0 0 6px">Waiting for ' + wait.join(", ") + " to finish</p>" : "") +
       ib("shuffle", "Change teams", 'data-a="teams" data-w="n" ' + at) + " " +
       (canMove ? ibt("swap", COURTS[o], 'data-a="lmove" ' + at) + " " : "") +
@@ -456,29 +534,39 @@ function render() {
       body = lineup(i) + (full ? "" : '<p class="note" style="margin:10px 0 6px">Open. Select 4 players (' + sel.size + "/4 selected).</p>" +
         '<button class="pri sm" data-a="' + (anyPlaying ? "queuenext" : "assign") + '" data-i="' + i + '"' + (sel.size === 4 ? "" : " disabled") + ">" + (anyPlaying ? "Line up here (starts when they finish)" : "Put selected here") + "</button>");
     } else body = '<p class="note">Not in use</p>';
-    return '<div class="card' + (on || c ? "" : " off") + '"><h3>' + esc(COURTS[i]) + "</h3>" + body + "</div>";
+    return '<div class="card' + (on || c ? "" : " off") + '"><h3>' + esc(COURTS[i]) + "</h3><span class=\"court-state\">" + (c ? "OCCUPIED · MATCH IN PROGRESS" : (on ? "AVAILABLE" : "CLOSED")) + "</span>" + body + "</div>";
   }).join("");
 
-  const gb = p => (!p.host && guestCount(S, p) < MAX_GUESTS) ? ib("userplus", "Add a guest", 'data-a="guest" data-id="' + p.id + '"') : "";
+  const gb = p => (p.st === "today" && !p.host && guestCount(S, p) < MAX_GUESTS) ? ib("userplus", "Add a guest", 'data-a="guest" data-id="' + p.id + '"') : "";
   $("qn").textContent = q.length ? "(" + q.length + ")" : "";
   $("queue").innerHTML = q.length ? q.map((p, k) =>
     '<li class="row' + (sel.has(p.id) ? " next" : "") + '"><span class="n">' + (k + 1) + '</span><span class="nm">' + esc(dn(S, p)) +
     '</span><span class="t">arrived ' + tm(p.t) + "</span>" + gb(p) + (sel.has(p.id) ? ibt("check", "Team " + teamNo(p.id), 'data-a="sel" data-id="' + p.id + '"', "pri") : ib("circle", "Select", 'data-a="sel" data-id="' + p.id + '"')) +
-    ib("logout", "Leave the queue", 'data-a="leave" data-id="' + p.id + '"') + "</li>"
+    ib("logout", "Leave queue", 'data-a="leave" data-id="' + p.id + '"') + ib("check", "Done playing today", 'data-a="doneplay" data-id="' + p.id + '"') + "</li>"
   ).join("") : '<li class="note">Nobody in the queue yet. Players tap Check in when they arrive.</li>';
 
   const t = S.players.filter(p => p.st === "today"), ord = [];
   t.filter(p => !p.host).forEach(h => { ord.push(h); t.filter(g => g.host === h.id).forEach(g => ord.push(g)); });
   t.filter(g => !ord.includes(g)).forEach(g => ord.push(g));
-  const going = S.players.filter(p => (p.st !== "out" && p.st !== "today") || (p.st === "today" && p.tag !== "maybe")).length;
+  const checked = S.players.filter(p => p.st === "queue" || p.st === "next" || p.st === "court");
+  const going = S.players.filter(p => p.st !== "out" && !(p.st === "today" && p.tag === "maybe")).length;
   const maybe = t.filter(p => p.tag === "maybe").length;
   $("cnt").textContent = (going + maybe) ? "(" + going + " going" + (maybe ? ", " + maybe + " tentative" : "") + ")" : "";
+  $("todaycnt").textContent = "(" + ord.length + ")";
+  $("checkcnt").textContent = "(" + checked.length + ")";
   $("list").innerHTML = ord.length ? ord.map(p =>
-    '<li class="row' + (p.host ? " guest" : "") + '"><span class="nm">' + esc(dn(S, p)) + (p.tag === "maybe" ? ' <span class="tag">Tentative</span>' : "") + "</span>" +
-    ib("login", "Check in (arrived at the court)", 'data-a="in" data-id="' + p.id + '"', "pri") +
+    '<li class="row' + (p.host ? " guest" : "") + '"><button class="name-tap" data-a="in" data-id="' + p.id + '">' + esc(dn(S, p)) + (p.tag === "maybe" ? ' <span class="tag">Tentative</span>' : "") + '</button>' +
     ib(p.tag === "maybe" ? "check" : "help", p.tag === "maybe" ? "Confirm: definitely coming" : "Mark as tentative", 'data-a="tag" data-id="' + p.id + '"') + gb(p) +
-    ib("x", "Cancel", 'data-a="cancel" data-id="' + p.id + '"') + "</li>"
-  ).join("") : '<li class="note">Add everyone playing today. They tap Check in once they arrive at the court.</li>';
+    ib("trash", "Delete player", 'data-a="del" data-id="' + p.id + '"') + "</li>"
+  ).join("") : '<li class="note">No players added yet.</li>';
+  $("checked").innerHTML = checked.length ? checked.map(p => {
+    const status = p.st === "court" ? "Playing" : p.st === "next" ? "Lined up" : "In queue";
+    const canReturn = p.st === "queue" && !p.nx;
+    return '<li class="row"><button class="name-tap" data-a="' + (canReturn ? "leave" : "noop") + '" data-id="' + p.id + '"' + (canReturn ? "" : " disabled") + '>' + esc(dn(S,p)) + '</button><span class="stat">' + status + '</span>' +
+      (canReturn ? ib("logout", "Leave queue / move back", 'data-a="leave" data-id="' + p.id + '"') + ib("check", "Done playing today", 'data-a="doneplay" data-id="' + p.id + '"') : "") +
+      (p.st === "queue" && !p.nx ? ib("trash", "Delete player", 'data-a="del" data-id="' + p.id + '"') : "") +
+      '</li>';
+  }).join("") : '<li class="note">Nobody checked in yet.</li>';
 
   const o = S.players.filter(p => p.st === "out");
   $("outwrap").style.display = o.length ? "" : "none";
@@ -518,6 +606,12 @@ document.addEventListener("click", e => {
   if (a === "img") { copyImage(false); return; }
   if (a === "share") { copyImage(true); return; }
   if (a === "assign" || a === "queuenext") { if (sel.size !== 4) return; d.ids = [...sel].join(","); sel.clear(); }
+  if (a === "noop") return;
+  if (a === "del") {
+    const p = find(S, +d.id);
+    if (!p || p.st === "court" || p.st === "next" || p.nx) { alert("A player in a match or lineup cannot be deleted. Finish/cancel the lineup first."); return; }
+    if (!confirm("Delete " + dn(S,p) + " permanently from today's shared list?")) return;
+  }
   if (a === "guest") { const n = prompt("Guest name (leave blank for Guest 1, Guest 2)"); if (n === null) return; d.name = n.trim().slice(0, 30); }
   if (a === "bbrename") { const n = prompt("Ball boy name", d.name); if (n === null || !n.trim()) return; d.name = n.trim().slice(0, 30); }
   if (!A[a]) return;
@@ -543,7 +637,21 @@ if (ref) {
   ref.on("value", snap => { S = norm(snap.val()); loaded = true; render(); });
   db.ref(".info/connected").on("value", s => { online = !!s.val(); render(); });
 }
-setInterval(() => { if (S.day !== dayKey()) mutate(() => {}); else render(); }, 30000);
+let promptedResetDay = "";
+function checkDailyReset() {
+  if (S.day !== dayKey()) {
+    const todayKey = dayKey();
+    if (promptedResetDay !== todayKey) {
+      promptedResetDay = todayKey;
+      if (confirm("It is past 10:00 AM. Reset today's shared tennis queue, courts, players and match log? This affects everyone using the app.")) {
+        mutate(s => { Object.assign(s, fresh()); });
+      } else {
+        toast("Daily reset postponed. The existing board remains until you confirm reset.");
+      }
+    }
+  } else render();
+}
+setInterval(checkDailyReset, 30000);
 actions();
 render();
 </script>
